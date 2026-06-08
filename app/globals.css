@@ -6,7 +6,7 @@
 /* @import "@liveblocks/react-ui/styles.css"; */
 /* @import "@liveblocks/react-lexical/styles.css"; */
 
-/* @import "../styles/dark-theme.css"; */
+@import "../styles/dark-theme.css";
 
 @theme {
   --font-sans: "Noto Sans Arabic Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";

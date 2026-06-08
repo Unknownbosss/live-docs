@@ -12,6 +12,7 @@
     "@fontsource-variable/noto-sans-arabic": "^5.2.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "jsm-editor": "^0.0.12",
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
     "radix-ui": "^1.5.0",
@@ -29,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
