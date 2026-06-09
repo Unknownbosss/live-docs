@@ -19,12 +19,29 @@ import {
   REDO_COMMAND,
   SELECTION_CHANGE_COMMAND,
   UNDO_COMMAND,
+  RangeSelection,
+  NodeSelection,
 } from 'lexical';
 import {
   $createHeadingNode,
   $createQuoteNode,
   $isHeadingNode,
+  HeadingTagType,
 } from '@lexical/rich-text';
+import { 
+  $createCodeNode, 
+  $isCodeNode, 
+  CODE_LANGUAGE_FRIENDLY_NAME_MAP,
+  CODE_LANGUAGE_MAP
+} from '@lexical/code';
+import {
+  INSERT_UNORDERED_LIST_COMMAND,
+  INSERT_ORDERED_LIST_COMMAND,
+  REMOVE_LIST_COMMAND,
+  $isListNode,
+  ListNode,
+} from '@lexical/list';
+import { TOGGLE_LINK_COMMAND, $isLinkNode } from '@lexical/link';
 import { $setBlocksType } from '@lexical/selection';
 import { $findMatchingParent } from '@lexical/utils';
 import React from 'react';
@@ -35,6 +52,26 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
+import { 
+  Undo2, 
+  Redo2, 
+  Heading1, 
+  Heading2, 
+  Heading3, 
+  List, 
+  ListOrdered, 
+  Quote, 
+  Code, 
+  Bold, 
+  Italic, 
+  Underline, 
+  Strikethrough, 
+  Link2, 
+  AlignLeft, 
+  AlignCenter, 
+  AlignRight, 
+  AlignJustify 
+} from 'lucide-react';
 
 const LowPriority = 1;
 
@@ -44,13 +81,15 @@ function Divider() {
 
 export default function ToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
-  const toolbarRef = useRef(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
+  const [isCode, setIsCode] = useState(false);
+  const [isLink, setIsLink] = useState(false);
   const activeBlock = useActiveBlock();
 
   const $updateToolbar = useCallback(() => {
@@ -61,6 +100,16 @@ export default function ToolbarPlugin() {
       setIsItalic(selection.hasFormat('italic'));
       setIsUnderline(selection.hasFormat('underline'));
       setIsStrikethrough(selection.hasFormat('strikethrough'));
+      setIsCode(selection.hasFormat('code'));
+
+      // Update link
+      const node = selection.anchor.getNode();
+      const parent = node.getParent();
+      if ($isLinkNode(parent) || $isLinkNode(node)) {
+        setIsLink(true);
+      } else {
+        setIsLink(false);
+      }
     }
   }, []);
 
@@ -98,29 +147,51 @@ export default function ToolbarPlugin() {
     );
   }, [editor, $updateToolbar]);
 
-  function toggleBlock(type: 'h1' | 'h2' | 'h3' | 'quote') {
+  function toggleBlock(type: 'h1' | 'h2' | 'h3' | 'quote' | 'bullet' | 'number' | 'code') {
     const selection = $getSelection();
 
-    if (activeBlock === type) {
-      return $setBlocksType(selection, () => $createParagraphNode());
-    }
+    if ($isRangeSelection(selection)) {
+      if (type === 'bullet') {
+        if (activeBlock === 'bullet') {
+          return editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
+        } else {
+          return editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+        }
+      }
 
-    if (type === 'h1') {
-      return $setBlocksType(selection, () => $createHeadingNode('h1'));
-    }
+      if (type === 'number') {
+        if (activeBlock === 'number') {
+          return editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
+        } else {
+          return editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+        }
+      }
 
-    if (type === 'h2') {
-      return $setBlocksType(selection, () => $createHeadingNode('h2'));
-    }
+      if (activeBlock === type) {
+        return $setBlocksType(selection, () => $createParagraphNode());
+      }
 
-    if (type === 'h3') {
-      return $setBlocksType(selection, () => $createHeadingNode('h3'));
-    }
+      if (type === 'h1' || type === 'h2' || type === 'h3') {
+        return $setBlocksType(selection, () => $createHeadingNode(type as HeadingTagType));
+      }
 
-    if (type === 'quote') {
-      return $setBlocksType(selection, () => $createQuoteNode());
+      if (type === 'quote') {
+        return $setBlocksType(selection, () => $createQuoteNode());
+      }
+
+      if (type === 'code') {
+        return $setBlocksType(selection, () => $createCodeNode());
+      }
     }
   }
+
+  const insertLink = useCallback(() => {
+    if (!isLink) {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, 'https://');
+    } else {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+    }
+  }, [editor, isLink]);
 
   return (
     <div className="toolbar" ref={toolbarRef}>
@@ -132,7 +203,7 @@ export default function ToolbarPlugin() {
         className="toolbar-item spaced"
         aria-label="Undo"
       >
-        <i className="format undo" />
+        <Undo2 className="size-4" />
       </button>
       <button
         disabled={!canRedo}
@@ -142,37 +213,62 @@ export default function ToolbarPlugin() {
         className="toolbar-item"
         aria-label="Redo"
       >
-        <i className="format redo" />
+        <Redo2 className="size-4" />
       </button>
+
       <Divider />
+
       <button
         onClick={() => editor.update(() => toggleBlock('h1'))}
         data-active={activeBlock === 'h1' ? '' : undefined}
-        className={
-          'toolbar-item spaced ' + (activeBlock === 'h1' ? 'active' : '')
-        }
+        className={'toolbar-item spaced ' + (activeBlock === 'h1' ? 'active' : '')}
       >
-        <i className="format h1" />
+        <Heading1 className="size-4" />
       </button>
       <button
         onClick={() => editor.update(() => toggleBlock('h2'))}
         data-active={activeBlock === 'h2' ? '' : undefined}
-        className={
-          'toolbar-item spaced ' + (activeBlock === 'h2' ? 'active' : '')
-        }
+        className={'toolbar-item spaced ' + (activeBlock === 'h2' ? 'active' : '')}
       >
-        <i className="format h2" />
+        <Heading2 className="size-4" />
       </button>
       <button
         onClick={() => editor.update(() => toggleBlock('h3'))}
         data-active={activeBlock === 'h3' ? '' : undefined}
-        className={
-          'toolbar-item spaced ' + (activeBlock === 'h3' ? 'active' : '')
-        }
+        className={'toolbar-item spaced ' + (activeBlock === 'h3' ? 'active' : '')}
       >
-        <i className="format h3" />
+        <Heading3 className="size-4" />
       </button>
+
       <Divider />
+
+      <button
+        onClick={() => editor.update(() => toggleBlock('bullet'))}
+        className={'toolbar-item spaced ' + (activeBlock === 'bullet' ? 'active' : '')}
+      >
+        <List className="size-4" />
+      </button>
+      <button
+        onClick={() => editor.update(() => toggleBlock('number'))}
+        className={'toolbar-item spaced ' + (activeBlock === 'number' ? 'active' : '')}
+      >
+        <ListOrdered className="size-4" />
+      </button>
+      <button
+        onClick={() => editor.update(() => toggleBlock('quote'))}
+        className={'toolbar-item spaced ' + (activeBlock === 'quote' ? 'active' : '')}
+      >
+        <Quote className="size-4" />
+      </button>
+      <button
+        onClick={() => editor.update(() => toggleBlock('code'))}
+        className={'toolbar-item spaced ' + (activeBlock === 'code' ? 'active' : '')}
+      >
+        <Code className="size-4" />
+      </button>
+
+      <Divider />
+
       <button
         onClick={() => {
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
@@ -180,7 +276,7 @@ export default function ToolbarPlugin() {
         className={'toolbar-item spaced ' + (isBold ? 'active' : '')}
         aria-label="Format Bold"
       >
-        <i className="format bold" />
+        <Bold className="size-4" />
       </button>
       <button
         onClick={() => {
@@ -189,7 +285,7 @@ export default function ToolbarPlugin() {
         className={'toolbar-item spaced ' + (isItalic ? 'active' : '')}
         aria-label="Format Italics"
       >
-        <i className="format italic" />
+        <Italic className="size-4" />
       </button>
       <button
         onClick={() => {
@@ -198,7 +294,7 @@ export default function ToolbarPlugin() {
         className={'toolbar-item spaced ' + (isUnderline ? 'active' : '')}
         aria-label="Format Underline"
       >
-        <i className="format underline" />
+        <Underline className="size-4" />
       </button>
       <button
         onClick={() => {
@@ -207,9 +303,18 @@ export default function ToolbarPlugin() {
         className={'toolbar-item spaced ' + (isStrikethrough ? 'active' : '')}
         aria-label="Format Strikethrough"
       >
-        <i className="format strikethrough" />
+        <Strikethrough className="size-4" />
       </button>
+      <button
+        onClick={insertLink}
+        className={'toolbar-item spaced ' + (isLink ? 'active' : '')}
+        aria-label="Insert Link"
+      >
+        <Link2 className="size-4" />
+      </button>
+
       <Divider />
+
       <button
         onClick={() => {
           editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left');
@@ -217,7 +322,7 @@ export default function ToolbarPlugin() {
         className="toolbar-item spaced"
         aria-label="Left Align"
       >
-        <i className="format left-align" />
+        <AlignLeft className="size-4" />
       </button>
       <button
         onClick={() => {
@@ -226,7 +331,7 @@ export default function ToolbarPlugin() {
         className="toolbar-item spaced"
         aria-label="Center Align"
       >
-        <i className="format center-align" />
+        <AlignCenter className="size-4" />
       </button>
       <button
         onClick={() => {
@@ -235,7 +340,7 @@ export default function ToolbarPlugin() {
         className="toolbar-item spaced"
         aria-label="Right Align"
       >
-        <i className="format right-align" />
+        <AlignRight className="size-4" />
       </button>
       <button
         onClick={() => {
@@ -244,7 +349,7 @@ export default function ToolbarPlugin() {
         className="toolbar-item"
         aria-label="Justify Align"
       >
-        <i className="format justify-align" />
+        <AlignJustify className="size-4" />
       </button>{' '}
     </div>
   );
@@ -280,6 +385,12 @@ function useActiveBlock() {
 
       if ($isHeadingNode(element)) {
         return element.getTag();
+      }
+
+      if ($isListNode(element)) {
+        const parentList = $findMatchingParent(anchor, (node) => $isListNode(node));
+        const listType = parentList ? (parentList as ListNode).getListType() : element.getListType();
+        return listType; // 'bullet' or 'number'
       }
 
       return element.getType();

@@ -1,51 +1,90 @@
-'use client';
+import { useEffect, useState } from "react";
+import type { EditorState } from "lexical";
 
-import Theme from './plugins/Theme';
-import ToolbarPlugin from './plugins/ToolbarPlugin';
-import { HeadingNode } from '@lexical/rich-text';
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import React from 'react';
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
+import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin";
 
-// Catch any errors that occur during Lexical updates and log them
-// or throw them as needed. If you don't throw them, Lexical will
-// try to recover gracefully without losing user data.
+import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { ListNode, ListItemNode } from "@lexical/list";
+import { LinkNode } from "@lexical/link";
+import { CodeNode, CodeHighlightNode } from "@lexical/code";
+import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 
-function Placeholder() {
-  return <div className="editor-placeholder">Enter some rich text...</div>;
+import ToolbarPlugin from "./plugins/ToolbarPlugin";
+import Theme from "./plugins/Theme";
+
+function MyOnChangePlugin({
+  onChange,
+}: {
+  onChange: (editorState: EditorState) => void;
+}) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      onChange(editorState);
+    });
+  }, [editor, onChange]);
+
+  return null;
 }
 
-export function Editor() {
+function onError(error: Error, editor: any) {
+  console.error(error);
+}
+
+export default function Editor() {
   const initialConfig = {
-    namespace: 'Editor',
-    nodes: [HeadingNode],
-    onError: (error: Error) => {
-      console.error(error);
-      throw error;
-    },
+    namespace: "MyEditor",
     theme: Theme,
+    nodes: [HeadingNode, ListNode, ListItemNode, LinkNode, QuoteNode, CodeNode, CodeHighlightNode, HorizontalRuleNode],
+    onError,
   };
+
+  const [editorState, setEditorState] = useState<EditorState | null>(null);
+
+  function onChange(state: EditorState) {
+    setEditorState(state);
+  }
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <div className="editor-container size-full">
-        <ToolbarPlugin />
-
-        <div className="editor-inner h-[1100px]">
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable className="editor-input h-full" />
-            }
-            placeholder={<Placeholder />}
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-          <HistoryPlugin />
-          <AutoFocusPlugin />
+        <div className="toolbar-wrapper flex min-w-full justify-between">
+          <ToolbarPlugin />
         </div>
+
+        <RichTextPlugin
+          contentEditable={
+            <ContentEditable
+              className="editor-input h-full"
+              aria-placeholder="Enter some text..."
+              placeholder={
+                <div className="editor-placeholder">Enter some text...</div>
+              }
+            />
+          }
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+
+        <HistoryPlugin />
+        <AutoFocusPlugin />
+        <ListPlugin />
+        <LinkPlugin />
+        <HorizontalRulePlugin />
+        <TabIndentationPlugin />
+        <MarkdownShortcutPlugin />
+        <MyOnChangePlugin onChange={onChange} />
       </div>
     </LexicalComposer>
   );

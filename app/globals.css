@@ -3,8 +3,8 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/noto-sans-arabic";
 
-/* @import "@liveblocks/react-ui/styles.css"; */
-/* @import "@liveblocks/react-lexical/styles.css"; */
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-lexical/styles.css";
 
 @import "../styles/dark-theme.css";
 

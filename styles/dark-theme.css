@@ -79,7 +79,7 @@ body {
   overflow: hidden;
   position: absolute;
   text-overflow: ellipsis;
-  top: 40px;
+  top: 180px;
   left: 40px;
   font-size: 15px;
   user-select: none;
@@ -344,18 +344,7 @@ pre::-webkit-scrollbar-thumb {
   margin-right: 2px;
 }
 
-.toolbar button.toolbar-item i.format {
-  background-size: contain;
-  display: inline-block;
-  height: 18px;
-  width: 18px;
-  margin-top: 2px;
-  vertical-align: -0.25em;
-  display: flex;
-  opacity: 0.6;
-}
-
-.toolbar button.toolbar-item:disabled i.format {
+.toolbar button.toolbar-item:disabled svg {
   opacity: 0.2;
 }
 
@@ -363,8 +352,16 @@ pre::-webkit-scrollbar-thumb {
   background-color: #0f1c34;
 }
 
-.toolbar button.toolbar-item.active i {
+.toolbar button.toolbar-item svg {
+  color: #777;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.toolbar button.toolbar-item.active svg,
+.toolbar .toolbar-item:hover:not([disabled]) svg {
   opacity: 1;
+  color: #fff;
 }
 
 .toolbar .toolbar-item:hover:not([disabled]) {
@@ -455,4 +452,24 @@ i.h2 {
 
 i.h3 {
   background-image: url(/assets/icons/h3.svg);
+}
+
+i.bullet-list {
+  background-image: url(/assets/icons/list-ul.svg);
+}
+
+i.numbered-list {
+  background-image: url(/assets/icons/list-ol.svg);
+}
+
+i.quote {
+  background-image: url(/assets/icons/chat-square-quote.svg);
+}
+
+i.code {
+  background-image: url(/assets/icons/code.svg);
+}
+
+i.link {
+  background-image: url(/assets/icons/link.svg);
 }
