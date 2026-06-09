@@ -39,7 +39,7 @@ export const getDocument = async ({ roomId, userId }: { roomId: string, userId: 
     const room = await liveblocks.getRoom(roomId);
 
     // todo: Bring this back later
-    
+
     // const hasAccess = Object.keys(room.usersAccesses).includes(userId);
 
     // if(!hasAccess) {
@@ -51,3 +51,16 @@ export const getDocument = async ({ roomId, userId }: { roomId: string, userId: 
   }
 }
     
+export const updateDocument = async ({ roomId, title }: { roomId: string, title: string }) => {
+  try {
+    const room = await liveblocks.updateRoom(roomId, {
+      metadata: {
+        title,
+      },
+    });
+    revalidatePath(`/documents/${roomId}`);
+    return parseStringify(room);
+  } catch (error) {
+    console.log(`Error happened while updating document: ${error}`);
+  }
+}
