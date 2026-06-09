@@ -21,7 +21,7 @@ export const createDocument = async ({ userId, email }: CreateDocumentParams) =>
     }
 
     const room = await liveblocks.createRoom(roomId, {
-     defaultAccesses: [],
+     defaultAccesses: ["room:write"],
      usersAccesses,
      metadata
     });
@@ -30,7 +30,24 @@ export const createDocument = async ({ userId, email }: CreateDocumentParams) =>
 
     return parseStringify(room)
   } catch (error) {
-    console.log(`Error happened while creating a document: ${error}`);
+    console.error(`Error happened while creating a document:`, error);
   }
 };
+
+export const getDocument = async ({ roomId, userId }: { roomId: string, userId: string }) => {
+  try {
+    const room = await liveblocks.getRoom(roomId);
+
+    // todo: Bring this back later
+    
+    // const hasAccess = Object.keys(room.usersAccesses).includes(userId);
+
+    // if(!hasAccess) {
+    //   throw new Error("You are not authorized to access this document");
+    // }
+    return parseStringify(room);
+  } catch (error) {
+    console.log(`Error happened while fetching document: ${error}`);
+  }
+}
     

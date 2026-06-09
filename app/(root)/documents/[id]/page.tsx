@@ -1,14 +1,32 @@
-"use client";
-
 import CollaborativeRoom from "@/components/CollaborativeRoom";
-import Editor from "@/components/editor/Editor";
-import Header from "@/components/Header";
-import { Show, SignIn, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { getDocument } from "@/lib/actions/room.actions";
+import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
-const Document = () => {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+const Document = async ({ params }: PageProps) => {
+  const { id } = await params;
+  const clerkUser = await currentUser();
+
+  
+  if (!clerkUser) redirect("/sign-in");
+  
+  const room = await getDocument({
+    roomId: id,
+    userId: clerkUser.emailAddresses[0].emailAddress,
+  });
+
+
+  if (!room) redirect("/");
+
+  // TODO : Assess the user access to the document
+
   return (
     <main className="flex w-full flex-col items-center">
-      <CollaborativeRoom />
+      <CollaborativeRoom roomId={id} roomMetadata={room.metadata} />
     </main>
   );
 };
