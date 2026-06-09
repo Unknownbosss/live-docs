@@ -1,12 +1,14 @@
-"use server"
+"use server";
 
-import { nanoid } from "nanoid" 
+import { nanoid } from "nanoid";
 import { liveblocks } from "../liveblocks";
 import { revalidatePath } from "next/cache";
 import { parseStringify } from "../utils";
 
-
-export const createDocument = async ({ userId, email }: CreateDocumentParams) => {
+export const createDocument = async ({
+  userId,
+  email,
+}: CreateDocumentParams) => {
   const roomId = nanoid();
 
   try {
@@ -16,25 +18,31 @@ export const createDocument = async ({ userId, email }: CreateDocumentParams) =>
       title: "Untitled Document",
     };
 
-    const usersAccesses: RoomAccesses ={
-      [email]: ["room:write"]
-    }
+    const usersAccesses: RoomAccesses = {
+      [email]: ["room:write"],
+    };
 
     const room = await liveblocks.createRoom(roomId, {
-     defaultAccesses: ["room:write"],
-     usersAccesses,
-     metadata
+      defaultAccesses: ["room:write"],
+      usersAccesses,
+      metadata,
     });
 
-    revalidatePath("/")
+    revalidatePath("/");
 
-    return parseStringify(room)
+    return parseStringify(room);
   } catch (error) {
     console.error(`Error happened while creating a document:`, error);
   }
 };
 
-export const getDocument = async ({ roomId, userId }: { roomId: string, userId: string }) => {
+export const getDocument = async ({
+  roomId,
+  userId,
+}: {
+  roomId: string;
+  userId: string;
+}) => {
   try {
     const room = await liveblocks.getRoom(roomId);
 
@@ -49,9 +57,15 @@ export const getDocument = async ({ roomId, userId }: { roomId: string, userId: 
   } catch (error) {
     console.log(`Error happened while fetching document: ${error}`);
   }
-}
-    
-export const updateDocument = async ({ roomId, title }: { roomId: string, title: string }) => {
+};
+
+export const updateDocument = async ({
+  roomId,
+  title,
+}: {
+  roomId: string;
+  title: string;
+}) => {
   try {
     const room = await liveblocks.updateRoom(roomId, {
       metadata: {
@@ -63,4 +77,16 @@ export const updateDocument = async ({ roomId, title }: { roomId: string, title:
   } catch (error) {
     console.log(`Error happened while updating document: ${error}`);
   }
-}
+};
+
+export const getDocuments = async ({ email }: { email: string }) => {
+  try {
+    const rooms = await liveblocks.getRooms({
+      userId: email,
+    });
+
+    return parseStringify(rooms);
+  } catch (error) {
+    console.log(`Error happened while fetching documents: ${error}`);
+  }
+};
