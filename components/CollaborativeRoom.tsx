@@ -19,8 +19,8 @@ import Loader from "./Loader";
 const CollaborativeRoom = ({
   roomId,
   roomMetadata,
+  users, currentUserType
 }: CollaborativeRoomProps) => {
-  const currentUserType = "editor";
 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,6 +32,7 @@ const CollaborativeRoom = ({
   const updateTitleHandler = async (
     e: React.KeyboardEvent<HTMLInputElement>,
   ) => {
+    if (loading) return;
     if (e.key === "Enter") {
       setLoading(true);
       try {
@@ -54,22 +55,36 @@ const CollaborativeRoom = ({
   };
 
   useEffect(() => {
+    if (!editing) return;
+
     const handleClickOutside = async (e: MouseEvent) => {
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
       ) {
+        if (documentTitle !== roomMetadata.title) {
+          setLoading(true);
+
+          try {
+            await updateDocument({
+              roomId,
+              title: documentTitle,
+            });
+          } finally {
+            setLoading(false);
+          }
+        }
+
         setEditing(false);
-        setLoading(true);
-        await updateDocument({ roomId, title: documentTitle });
-        setLoading(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [roomId, documentTitle]);
+  }, [editing, documentTitle, roomId, roomMetadata.title]);
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -128,7 +143,7 @@ const CollaborativeRoom = ({
               </Show>
             </div>
           </Header>
-          <Editor />
+          <Editor roomId={roomId} currentUserType={currentUserType}/>
         </div>
       </ClientSideSuspense>
     </RoomProvider>
