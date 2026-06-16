@@ -33,6 +33,7 @@ import { useSyncStatus, useThreads } from "@liveblocks/react/suspense";
 import ToolbarPlugin from "./plugins/ToolbarPlugin";
 import Theme from "./plugins/Theme";
 import Loader from "../Loader";
+import Comments from "../Comments";
 
 function MyOnChangePlugin({
   onChange,
@@ -79,10 +80,14 @@ export default function Editor({ roomId, currentUserType }: { roomId: string, cu
           {/* {currentUserType === "editor" && <DeleteModal roomId={roomId} />} */}
         </div>
 
-        <div className="editor-wrapper flex flex-col items-center justify-start">
-          {syncStatus === "synchronizing" ? (
+        <div className="editor-wrapper flex flex-col items-center justify-start lg:flex-row lg:items-start">
+
+          {/* TODO: add syncronization status that allows debouncing*/}
+          {/* {syncStatus === "synchronizing" ? (
             <Loader />
-          ) : (
+
+          ) : (   )} */}
+
             <div className="editor-inner min-h-[1100px] relative mb-5 h-fit w-full max-w-[800px] shadowm-md lg:mb-10">
               <RichTextPlugin
                 contentEditable={
@@ -109,12 +114,13 @@ export default function Editor({ roomId, currentUserType }: { roomId: string, cu
               <MarkdownShortcutPlugin />
               <MyOnChangePlugin onChange={onChange} />
             </div>
-          )}
+        
 
           <LiveblocksPlugin>
             <FloatingComposer className="w-[350px]"/>
             <FloatingThreads threads={threads}/>
-            <AnchoredThreads threads={threads}/>
+            <AnchoredThreads threads={threads} />
+            <Comments />
           </LiveblocksPlugin>
         </div>
       </div>
