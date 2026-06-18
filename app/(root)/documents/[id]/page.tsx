@@ -27,7 +27,7 @@ const Document = async ({ params }: PageProps) => {
   const userIds = Object.keys(room.usersAccesses);
   const users = await getClerkUsers({userIds});
  
-  const usersData = users.map((user: User) => ({
+  const usersData = users.filter((user: User | null) => user !== null).map((user: User) => ({
     ...user,
     userType: room.usersAccesses[user.email]?.includes("room:write") ? "editor" : "viewer",
   }));

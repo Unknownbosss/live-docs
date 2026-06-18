@@ -17,6 +17,7 @@ import { Input } from "./ui/input";
 import UserTypeSelector from "./UserTypeSelector";
 import Collaborator from "./Collaborator";
 import { updateDocumentAccess } from "@/lib/actions/room.actions";
+import { getClerkUsers } from "@/lib/actions/user.actions";
 
 const ShareModal = ({
   roomId,
@@ -29,10 +30,22 @@ const ShareModal = ({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("")
   const [userType, setUserType] = useState<UserType>("viewer");
 
   const shareDocumentHandler = async () => {
     setLoading(true);
+    setError("")
+    const users = await getClerkUsers({ userIds: [email] });
+    
+      const matchedUser = users.find((user: User | null) => user?.email === email);
+
+      if (!matchedUser) {
+        setError("No account found for this email address. kindly ask user to create an account");
+        setLoading(false);
+        return;
+      }
+
     await updateDocumentAccess({
       roomId,
       email,
@@ -40,6 +53,7 @@ const ShareModal = ({
       updatedBy: user.info,
     });
     setLoading(false);
+    setEmail("")
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -85,10 +99,11 @@ const ShareModal = ({
             onClick={shareDocumentHandler}
             disabled={!email || loading}
             className="gradient-blue flex h-full gap-1 px-4"
-          >
+            >
             {loading ? "Sharing..." : "Invite"}
           </Button>
         </div>
+            {error && <p className="text-red-500">{error}</p>}
         <div className="my-2 space-y-2">
           <ul className="flex flex-col">
             {collaborators.map((collaborator) => (
