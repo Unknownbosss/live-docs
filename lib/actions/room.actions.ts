@@ -103,8 +103,23 @@ export const updateDocumentAccess = async ({
     const room = await liveblocks.updateRoom(roomId, {
       usersAccesses: userAccesses,
     });
+
     if (room) {
-      // todo: send email to user
+      const notificationId = nanoid();
+
+      await liveblocks.triggerInboxNotification({
+        userId: email,
+        kind: "$documentAccess",
+        roomId,
+        subjectId: notificationId,
+        activityData: {
+          userType,
+          title: `You have been granted ${userType} access to the document by ${updatedBy.name}`,
+          avatar: updatedBy.name,
+          updatedBy: updatedBy.name,
+          email: updatedBy.email,
+        },
+      });
     }
 
     revalidatePath(`/documents/${roomId}`);
@@ -139,7 +154,6 @@ export const removeCollaborator = async ({
     console.log(`Error happened while removing collaborator: ${error}`);
   }
 };
-
 
 export const deleteDocument = async (roomId: string) => {
   try {
