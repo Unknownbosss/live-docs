@@ -24,7 +24,6 @@ const Document = async ({ params }: PageProps) => {
   if (!room) redirect("/");
 
 
-  // TODO : Assess the user access to the document
   const userIds = Object.keys(room.usersAccesses);
   const users = await getClerkUsers({userIds});
  

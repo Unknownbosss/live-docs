@@ -34,6 +34,7 @@ import ToolbarPlugin from "./plugins/ToolbarPlugin";
 import Theme from "./plugins/Theme";
 import Loader from "../Loader";
 import Comments from "../Comments";
+import { DeleteModal } from "../DeleteModal";
 
 function MyOnChangePlugin({
   onChange,
@@ -77,7 +78,7 @@ export default function Editor({ roomId, currentUserType }: { roomId: string, cu
       <div className="editor-container size-full">
         <div className="toolbar-wrapper flex min-w-full justify-between">
           <ToolbarPlugin />
-          {/* {currentUserType === "editor" && <DeleteModal roomId={roomId} />} */}
+          {currentUserType === "editor" && <DeleteModal roomId={roomId} />}
         </div>
 
         <div className="editor-wrapper flex flex-col items-center justify-start lg:flex-row lg:items-start">
